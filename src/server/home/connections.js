@@ -179,8 +179,9 @@ const digRun = (baseUrl) => {
 
 const dbRun = async (address) => {
   const proxyConfig = config.get('httpProxy')
+  const proxyUrl = new URL(proxyConfig)
   const proxyFinalConfig = proxyConfig
-    ? `?https_proxy=${proxyConfig}&https_proxy_port=80`
+    ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
     : ''
   let runResults = {}
 
