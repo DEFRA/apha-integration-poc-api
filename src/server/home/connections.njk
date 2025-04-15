@@ -1,0 +1,128 @@
+{% extends "layouts/page.njk" %}
+
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+
+{{ appHeading({
+    text: heading,
+    caption: "Check another"
+  }) }}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+  <form method="get" action="/" autocomplete="off" novalidate>
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "< Back",
+          classes: "govuk-button--primary",
+          preventDoubleClick: true
+        }) }}
+      </div>
+</form>
+
+{{ govukTable({
+  caption: "Connection result",
+  captionClasses: "govuk-table__caption--m",
+  rows: [
+    [
+      {
+        text: "Connection URL"
+      },
+      {
+        text: checkResult.fullUrl
+      }
+    ],
+   [
+     {
+       text: "Status Code"
+     },
+     {
+       text: checkResult.status+" : "+checkResult.statusText
+     }
+   ],
+    [
+      {
+        text: "Fetch Result"
+      },
+      {
+        html: checkResult.fetchResultData.substring(0,300) + "...[snip]"
+      }
+    ],
+    [
+      {
+        text: "Error"
+      },
+      {
+        text: checkResult.errorMessage
+      }
+    ],
+     [
+       {
+         text: "Stack Trace"
+       },
+       {
+         html: checkResult.stack
+       }
+     ],
+     [
+       {
+         text: "Ping"
+       },
+       {
+         html: checkResult.pingout
+       }
+     ],
+          [
+       {
+         text: "Ping Error"
+       },
+       {
+         html: checkResult.pingoutError
+       }
+     ],
+     [
+       {
+         text: "Dig "
+       },
+       {
+         html: checkResult.digout
+       }
+     ],
+     [
+       {
+         text: "NS Lookup"
+       },
+       {
+         html: checkResult.nslookup
+       }
+     ],
+          [
+       {
+         text: "NS Lookup Error"
+       },
+       {
+         html: checkResult.nslookupError
+       }
+     ],
+     [
+       {
+         text: "Curl Result StdError"
+       },
+       {
+         html: checkResult.curlResultError
+       }
+     ],
+     [
+       {
+         text: "Curl Result"
+       },
+       {
+         html: checkResult.curlResult.substring(0,300) + "...[snip]"
+       }
+     ]
+  ]
+}) }}
+
+{% endblock %}
+

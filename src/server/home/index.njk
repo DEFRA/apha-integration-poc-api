@@ -1,59 +1,90 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "Core delivery platform Node.js Frontend Template."
+    caption: "Check Connectivity to Resources"
   }) }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <div class="govuk-body" data-testid="app-page-body">
-        <p>
-          Welcome to the Frontend Template, a starter kit for Core Delivery Platform Node.js Frontends 🚀
-        </p>
-        <p>
-          Based on <a href="https://defra.github.io/software-development-standards">DEFRA</a> and <a
-            href="https://design-system.service.gov.uk/">GOV.UK</a> best practices this starter kit provides you with
-          a deployable, production ready template 🙌🏻 to start your new service with.
-        </p>
-        <p>This template comes with:</p>
-        <ul>
-          <li>
-            <a href="https://frontend.design-system.service.gov.uk/">GOV.UK Frontend</a>
-          </li>
-          <li>
-            <a href="https://hapi.dev">Hapi.js</a>
-          </li>
-          <li>
-            <a href="https://mozilla.github.io/nunjucks/">Nunjucks</a>
-          </li>
-          <li>
-            <a href="https://github.com/mozilla/node-convict">Node Convict</a>
-          </li>
-          <li>
-            <a href="https://jestjs.io/">Jest testing</a>
-          </li>
-          <li>GitHub Actions Pull Request and Publish jobs</li>
-          <li>
-            <a href="https://github.com/pinojs/pino">PinoJs logging</a>
-          </li>
-          <li>
-            <a href="https://standardjs.com">Standard JS</a>
-          </li>
-          <li>
-            <a href="https://eslint.org">ESLint</a>
-          </li>
-          <li>
-            <a href="https://stylelint.io">StyleLint</a>
-          </li>
-          <li>
-            <a href="https://prettier.io">Prettier</a>
-          </li>
-          <li>and lots more... 😎</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+  <form method="get" action="/connections" autocomplete="off" novalidate>
+  {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 
+{{ govukCheckboxes({
+  name: "enabled",
+  fieldset: {
+    legend: {
+      text: "Include checks?",
+      isPageHeading: true,
+      classes: "govuk-fieldset__legend--l"
+    }
+  },
+  hint: {
+    text: "Select all to run"
+  },
+  items: [
+    {
+      value: "fetch",
+      text: "Fetch Test"
+    },
+    {
+      value: "ping",
+      text: "Ping Test"
+    },
+    {
+      value: "dig",
+      text: "Dig"
+    },
+    {
+      value: "curl",
+      text: "Curl"
+    },
+    {
+      value: "nslookup",
+      text: "NS Lookup"
+    }
+  ]
+}) }}
+
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{{ govukInput({
+  label: {
+    text: "Where?",
+    classes: "govuk-label--l",
+    isPageHeading: false
+  },
+  id: "where",
+  name: "where"
+}) }}
+
+    {% call govukFieldset({
+      legend: {
+        text: "Select URL to test",
+        classes: "govuk-fieldset__legend--l",
+        isPageHeading: false
+      }
+    }) %}
+    {{ govukSelect({
+      id: "resource",
+      name: "resource",
+      label: {
+        text: "Connection URL"
+      },
+      items: urlList
+    }) }}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "Test Connection",
+          classes: "govuk-button--primary",
+          preventDoubleClick: true
+        }) }}
+      </div>
+  {% endcall %}
+</form>
+<br>
 {% endblock %}
