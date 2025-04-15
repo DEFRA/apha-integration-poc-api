@@ -1,18 +1,12 @@
 import { config } from '~/src/config/config.js'
-import { ProxyAgent, fetch as undiciFetch } from 'undici'
-
-const nonProxyFetch = (url, opts) => {
-  return undiciFetch(url, {
-    ...opts
-  })
-}
+import { ProxyAgent, fetch } from 'undici'
 
 const proxyFetch = (url, opts) => {
   const proxy = config.get('httpProxy')
   if (!proxy) {
-    return nonProxyFetch(url, opts)
+    return fetch(url, opts)
   } else {
-    return undiciFetch(url, {
+    return fetch(url, {
       ...opts,
       dispatcher: new ProxyAgent({
         uri: proxy,

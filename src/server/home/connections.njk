@@ -67,22 +67,6 @@
      ],
      [
        {
-         text: "Ping"
-       },
-       {
-         html: checkResult.pingout
-       }
-     ],
-          [
-       {
-         text: "Ping Error"
-       },
-       {
-         html: checkResult.pingoutError
-       }
-     ],
-     [
-       {
          text: "Dig "
        },
        {
@@ -119,6 +103,22 @@
        },
        {
          html: checkResult.curlResult.substring(0,300) + "...[snip]"
+       }
+     ],
+     [
+       {
+         text: "DB Result StdError"
+       },
+       {
+         html: checkResult.dbResultError
+       }
+     ],
+     [
+       {
+         text: "DB Result"
+       },
+       {
+         html: checkResult.dbResult.substring(0,300) + "...[snip]"
        }
      ]
   ]
