@@ -1,4 +1,5 @@
-import { homeController } from '~/src/server/home/controller.js'
+import { connectivityController } from '~/src/server/home/controller.js'
+import { makeConnectionController } from '~/src/server/home/connections.js'
 
 /**
  * Sets up the routes used in the home page.
@@ -10,13 +11,18 @@ import { homeController } from '~/src/server/home/controller.js'
  */
 export const home = {
   plugin: {
-    name: 'home',
-    register(server) {
+    name: 'connectivity',
+    register: (server) => {
       server.route([
         {
           method: 'GET',
           path: '/',
-          ...homeController
+          ...connectivityController
+        },
+        {
+          method: 'GET',
+          path: '/connections',
+          ...makeConnectionController
         }
       ])
     }

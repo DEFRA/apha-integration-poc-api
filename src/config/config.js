@@ -11,6 +11,20 @@ const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+const buildURLList = () => {
+  const finalList = []
+  Object.entries(process.env).forEach(([key, value]) => {
+    if (key.startsWith('urlList_') && value) {
+      const parts = key.split('_')
+      const currentObj = finalList[parseInt(parts[1])] || {}
+      currentObj[parts[2]] = value
+      currentObj.value = parseInt(parts[1])
+      finalList[parseInt(parts[1])] = currentObj
+    }
+  })
+  return finalList
+}
+
 export const config = convict({
   serviceVersion: {
     doc: 'The service version, this variable is injected into your docker container in CDP environments',
@@ -31,6 +45,7 @@ export const config = convict({
     default: 3000,
     env: 'PORT'
   },
+  urlList: buildURLList(),
   staticCacheTimeout: {
     doc: 'Static cache timeout in milliseconds',
     format: Number,
