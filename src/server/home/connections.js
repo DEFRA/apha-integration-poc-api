@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable camelcase */
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 // import axios from 'axios'
@@ -6,7 +7,7 @@ import childprocess from 'node:child_process'
 import dig from 'node-dig-dns'
 import { proxyFetch } from '~/src/server/common/helpers/proxy/proxy-fetch.js'
 import { config } from '~/src/config/config.js'
-import crypto from 'crypto'
+import oracledb from 'oracledb'
 
 const exec = util.promisify(childprocess.exec)
 
@@ -29,36 +30,26 @@ const makeConnectionController = {
         : urlList.filter((e) => `${e.value}` === resource)
     logger.info(`urlItem: ${JSON.stringify(urlItem)}`)
     const baseurl = urlItem[0].url
-    const url = `https://${baseurl}`
     const enabled = requested.query.enabled ?? []
-    const pingEnabled = enabled.includes('ping')
     const fetchEnabled = enabled.includes('fetch')
     const digEnabled = enabled.includes('dig')
-    const tracepathEnabled = enabled.includes('tracepath')
     const curlEnabled = enabled.includes('curl')
     const nslookupEnabled = enabled.includes('nslookup')
+    const dbEnabled = enabled.includes('db')
 
     const curlProxyCommand = process.env.CDP_HTTPS_PROXY
       ? ' -x $CDP_HTTPS_PROXY '
       : ''
-    const isBlobStorage = !!urlItem[0].DMP_BLOB_STORAGE_NAME
 
-    const blobStorageConfig = isBlobStorage
-      ? generateBlobStorageConfig(urlItem[0], logger)
-      : {}
+    const fullUrl = `https://${baseurl}`
 
-    const curlHeaders = blobStorageConfig.extraHeaders ?? ''
-    const fullUrl = url + (blobStorageConfig.queryPath ?? '')
+    const curlCommand = `curl ${curlProxyCommand} -v -m 5 -L "${fullUrl}"`
 
-    const curlCommand = `curl ${curlProxyCommand} -v -m 5 -L ${curlHeaders} "${fullUrl}"`
-
-    logger.info(`Starting checks ${fullUrl}`)
+    logger.info(`Starting checks ${baseurl}`)
 
     let results = {}
 
-    let pingresult = {}
     let digresult = {}
-    let traceresult = ''
     let curlResult = {}
     let nslookupResult = ''
     let checkResponse = {
@@ -68,6 +59,7 @@ const makeConnectionController = {
       text: Promise.resolve
     }
     let responseText
+    let dbResult = {}
 
     try {
       if (curlEnabled) {
@@ -75,12 +67,6 @@ const makeConnectionController = {
         curlResult = await execRun(curlCommand)
         logger.info(`curlResult Error: ${formatResult(curlResult.stderr)}`)
         logger.info(`curlResult StdOut: ${formatResult(curlResult.stdout)}`)
-      }
-
-      if (pingEnabled) {
-        pingresult = await execRun(`ping -c 1 ${baseurl}`)
-        logger.info(`ping: ${JSON.stringify(pingresult.stderr)}`)
-        logger.info(`ping: ${JSON.stringify(pingresult.stdout)}`)
       }
 
       if (digEnabled) {
@@ -98,27 +84,10 @@ const makeConnectionController = {
         )
       }
 
-      // This no longer has a UI element, but the code is still here (you can technically send a param to trigger it enabled=tracepath)
-      // It's hidden as it takes a long time to tracepath and the page often times out.  Results will be in the log though
-      if (tracepathEnabled) {
-        traceresult = await execRun(`tracepath ${baseurl}`)
-        logger.info(`tracepath stdError: ${JSON.stringify(traceresult.stderr)}`)
-        logger.info(`tracepath stdOut: ${JSON.stringify(traceresult.stdout)}`)
-      }
-
       if (fetchEnabled) {
         logger.info('Running proxyFetch')
-        const headerObject = new Headers([
-          ['x-ms-date', blobStorageConfig.headerDate],
-          ['x-ms-version', blobStorageConfig.storage_service_version],
-          ['Authorization', blobStorageConfig.authorization_header]
-        ])
-        const proxyFetchOpts = blobStorageConfig.extraHeaders
-          ? {
-              timeout: 2000,
-              headers: headerObject
-            }
-          : { timeout: 2000 }
+
+        const proxyFetchOpts = { timeout: 2000 }
         checkResponse = fetchEnabled
           ? await proxyFetch(fullUrl, proxyFetchOpts)
           : { status: 0, statusText: '[Skipped]', text: () => '' }
@@ -129,20 +98,23 @@ const makeConnectionController = {
         responseText = await checkResponse.text()
       }
 
+      if (dbEnabled) {
+        logger.info('Running dbconnection test')
+        dbResult = await dbRun(baseurl)
+      }
+
       results = {
         fullUrl,
         status: checkResponse.status,
         statusText: checkResponse.statusText,
         fetchResultData: formatResult(responseText),
-        pingout: formatResult(pingresult.stdout),
-        pingoutError: formatResult(pingresult.stderr),
         digout: formatDig(digresult),
-        traceout: formatResult(traceresult.stdout),
-        traceoutError: formatResult(traceresult.stderr),
         curlResult: formatResult(curlResult.stdout),
         curlResultError: formatResult(curlResult.stderr),
         nslookup: formatResult(nslookupResult.stdout),
-        nslookupError: formatResult(nslookupResult.stderr)
+        nslookupError: formatResult(nslookupResult.stderr),
+        dbResult: formatResult(dbResult.rows),
+        dbResultError: formatResult(dbResult.errorMessage)
       }
     } catch (error) {
       logger.info(error)
@@ -151,17 +123,15 @@ const makeConnectionController = {
         status: error.code ?? 'None',
         statusText: error.status ?? 'Error',
         fetchResultData: `[none]`,
-        pingout: formatResult(pingresult.stdout),
-        pingoutError: formatResult(pingresult.stderr),
         errorMessage: error.message,
         stack: error.stack,
         digout: JSON.stringify(digresult),
-        traceout: traceresult,
-        traceoutError: formatResult(traceresult.stderr),
         curlResult: formatResult(curlResult.stdout),
         curlResultError: formatResult(curlResult.stderr),
         nslookup: formatResult(nslookupResult.stderr),
-        nslookupError: formatResult(nslookupResult.stderr)
+        nslookupError: formatResult(nslookupResult.stderr),
+        dbResult: formatResult(dbResult.rows),
+        dbResultError: formatResult(dbResult.errorMessage)
       }
     }
 
@@ -207,11 +177,50 @@ const digRun = (baseUrl) => {
   })
 }
 
+const dbRun = async (address) => {
+  const proxyConfig = config.get('httpProxy')
+  const proxyFinalConfig = proxyConfig
+    ? `?https_proxy=${proxyConfig}&https_proxy_port=80`
+    : ''
+  let runResults = {}
+
+  let connection
+  try {
+    connection = await oracledb.getConnection({
+      user: 'test',
+      password: 'this is not a password',
+      connectString: `tcps://${address}/SOMEDB${proxyFinalConfig}`
+    })
+
+    const result = await connection.execute(`SELECT * FROM dual`)
+    runResults = {
+      rows: result?.rows ?? 'No rows returned',
+      errorMessage: connection.errorMessage ?? 'No Error message'
+    }
+  } catch (ex) {
+    runResults = {
+      rows: 'Error occured',
+      errorMessage:
+        ex.message +
+        '\n\nStackTrace:\n' +
+        ex.stack +
+        '\n\nError Code:\n' +
+        ex.code
+    }
+  } finally {
+    if (connection) {
+      await connection.close()
+    }
+  }
+  return runResults
+}
+
 const formatResult = (intext) => {
   return intext
     ? encodeHTML(intext)
         .replace(/\n/g, '<br>')
         .replace(/HTTPS_PROXY.*@/g, 'HTTPS_PROXY == ************@')
+        .replace(/https_proxy.*/g, 'https_proxy == ************')
     : ''
 }
 
@@ -234,42 +243,3 @@ const encodeHTML = (originalStr) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
     .replace(/\n/g, '<br>')
-
-const generateBlobStorageConfig = (urlEntry, logger) => {
-  const request_method = 'GET'
-  const nowDate = new Date().toUTCString()
-  const x_ms_date_h = `x-ms-date:${nowDate}`
-  const storage_service_version = '2019-12-12'
-  const x_ms_version_h = `x-ms-version:${storage_service_version}`
-
-  const storage_account = urlEntry.DMP_BLOB_STORAGE_NAME
-  const container_name = urlEntry.DmpBlobContainer
-
-  const string_to_sign = `${request_method}\n\n\n\n\n\n\n\n\n\n\n\n${x_ms_date_h}\n${x_ms_version_h}\n/${storage_account}/${container_name}\ncomp:list\nrestype:container`
-
-  const secret = process.env.AZURE_CLIENT_SECRET ?? 'SECRETSQUIRREL'
-
-  logger.info(
-    `Secret is Using ${secret === 'SECRETSQUIRREL' ? 'SECRETSQUIRREL' : 'REALKEY'}`
-  )
-
-  const signature = crypto
-    .createHmac('SHA256', Buffer.from(secret, 'base64'))
-    .update(string_to_sign)
-    .digest('base64')
-
-  const authorization = `SharedKey`
-  const authorization_header = `Authorization: ${authorization} ${storage_account}:${signature}`
-
-  const queryPath = `/${container_name}?comp=list&restype=container`
-  const extraHeaders = `-H "${x_ms_date_h}" -H "${x_ms_version_h}" -H "${authorization_header}"`
-  return {
-    extraHeaders,
-    queryPath,
-    headerDate: nowDate,
-    storage_service_version,
-    authorization_header,
-    x_ms_date_h,
-    x_ms_version_h
-  }
-}
