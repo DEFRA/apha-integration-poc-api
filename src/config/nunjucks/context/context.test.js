@@ -43,6 +43,11 @@ describe('#context', () => {
           },
           {
             isActive: false,
+            text: 'Connection Suite',
+            url: '/connectionsuite'
+          },
+          {
+            isActive: false,
             text: 'About',
             url: '/about'
           }
@@ -129,6 +134,11 @@ describe('#context cache', () => {
             isActive: true,
             text: 'Home',
             url: '/'
+          },
+          {
+            isActive: false,
+            text: 'Connection Suite',
+            url: '/connectionsuite'
           },
           {
             isActive: false,

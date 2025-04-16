@@ -8,61 +8,16 @@
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "Check Connectivity to Resources"
+    caption: "Check Connectivity to Proxy then Resource"
   }) }}
 
   <form method="get" action="/connections" autocomplete="off" novalidate>
-  {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-{{ govukCheckboxes({
-  name: "enabled",
-  fieldset: {
-    legend: {
-      text: "Include checks?",
-      isPageHeading: true,
-      classes: "govuk-fieldset__legend--l"
-    }
-  },
-  hint: {
-    text: "Select all to run"
-  },
-  items: [
-    {
-      value: "fetch",
-      text: "Fetch Test"
-    },
-    {
-      value: "testConnection",
-      text: "Test direct proxy connection using node http"
-    },
-    {
-      value: "dbFull",
-      text: "DB Connection FULL server:port/DB?proxy"
-    },
-    {
-      value: "dbAlt",
-      text: "DB Alt Connection server:port/DB"
-    },
-    {
-      value: "dig",
-      text: "Dig"
-    },
-    {
-      value: "curl",
-      text: "Curl"
-    },
-    {
-      value: "nslookup",
-      text: "NS Lookup"
-    }
-  ]
-}) }}
 
 {% from "govuk/components/input/macro.njk" import govukInput %}
 
 {{ govukInput({
   label: {
-    text: "Where?",
+    text: "Destination server:port (default 80)",
     classes: "govuk-label--l",
     isPageHeading: false
   },
@@ -70,21 +25,6 @@
   name: "where"
 }) }}
 
-    {% call govukFieldset({
-      legend: {
-        text: "Select URL to test",
-        classes: "govuk-fieldset__legend--l",
-        isPageHeading: false
-      }
-    }) %}
-    {{ govukSelect({
-      id: "resource",
-      name: "resource",
-      label: {
-        text: "Connection URL"
-      },
-      items: urlList
-    }) }}
       <div class="govuk-button-group">
         {{ govukButton({
           text: "Test Connection",
@@ -92,7 +32,6 @@
           preventDoubleClick: true
         }) }}
       </div>
-  {% endcall %}
 </form>
 <br>
 {% endblock %}
