@@ -68,7 +68,7 @@ const makeConnectionController = {
 
     try {
       if (testConnectionEnabled) {
-        connectionResult = await testConnection()
+        connectionResult = await testConnection(baseurl)
         logger.info(`testConnection Connected: ${connectionResult.connected}`)
         logger.info(
           `testConnection Error : ${connectionResult.proxyConnectErrCause}`
@@ -318,12 +318,12 @@ const encodeHTML = (originalStr) =>
         .replace(/\n/g, '<br>')
     : originalStr
 
-const testConnection = async () => {
+const testConnection = async (address) => {
   let proxyConnectErrCause = ''
   let req
   const httpsProxy = 'localhost'
-  const httpsProxyPort = 31536
-  const destination = '10.62.132.5'
+  const httpsProxyPort = 3128
+  const destination = address
   const destinationPort = 31536
   const logger = createLogger()
   let connected = false
