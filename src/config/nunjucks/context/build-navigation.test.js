@@ -19,6 +19,11 @@ describe('#buildNavigation', () => {
       },
       {
         isActive: false,
+        text: 'Connection Suite',
+        url: '/connectionsuite'
+      },
+      {
+        isActive: false,
         text: 'About',
         url: '/about'
       }
@@ -31,6 +36,11 @@ describe('#buildNavigation', () => {
         isActive: true,
         text: 'Home',
         url: '/'
+      },
+      {
+        isActive: false,
+        text: 'Connection Suite',
+        url: '/connectionsuite'
       },
       {
         isActive: false,

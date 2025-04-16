@@ -1,0 +1,98 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: "Check Connectivity to Resources"
+  }) }}
+
+  <form method="get" action="/connectionsuite/connections" autocomplete="off" novalidate>
+  {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+{{ govukCheckboxes({
+  name: "enabled",
+  fieldset: {
+    legend: {
+      text: "Include checks?",
+      isPageHeading: true,
+      classes: "govuk-fieldset__legend--l"
+    }
+  },
+  hint: {
+    text: "Select all to run"
+  },
+  items: [
+    {
+      value: "fetch",
+      text: "Fetch Test"
+    },
+    {
+      value: "testConnection",
+      text: "Test direct proxy connection using node http"
+    },
+    {
+      value: "dbFull",
+      text: "DB Connection FULL server:port/DB?proxy"
+    },
+    {
+      value: "dbAlt",
+      text: "DB Alt Connection server:port/DB"
+    },
+    {
+      value: "dig",
+      text: "Dig"
+    },
+    {
+      value: "curl",
+      text: "Curl"
+    },
+    {
+      value: "nslookup",
+      text: "NS Lookup"
+    }
+  ]
+}) }}
+
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{{ govukInput({
+  label: {
+    text: "Where?",
+    classes: "govuk-label--l",
+    isPageHeading: false
+  },
+  id: "where",
+  name: "where"
+}) }}
+
+    {% call govukFieldset({
+      legend: {
+        text: "Select URL to test",
+        classes: "govuk-fieldset__legend--l",
+        isPageHeading: false
+      }
+    }) %}
+    {{ govukSelect({
+      id: "resource",
+      name: "resource",
+      label: {
+        text: "Connection URL"
+      },
+      items: urlList
+    }) }}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "Test Connection",
+          classes: "govuk-button--primary",
+          preventDoubleClick: true
+        }) }}
+      </div>
+  {% endcall %}
+</form>
+<br>
+{% endblock %}

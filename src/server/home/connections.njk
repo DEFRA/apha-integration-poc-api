@@ -33,110 +33,6 @@
         text: checkResult.baseurl
       }
     ],
-   [
-     {
-       text: "Status Code"
-     },
-     {
-       text: checkResult.status+" : "+checkResult.statusText
-     }
-   ],
-    [
-      {
-        text: "Fetch Result"
-      },
-      {
-        html: checkResult.fetchResultData.substring(0,300) + "...[snip]"
-      }
-    ],
-    [
-      {
-        text: "Error"
-      },
-      {
-        text: checkResult.errorMessage
-      }
-    ],
-     [
-       {
-         text: "Stack Trace"
-       },
-       {
-         html: checkResult.stack
-       }
-     ],
-     [
-       {
-         text: "Dig "
-       },
-       {
-         html: checkResult.digout
-       }
-     ],
-     [
-       {
-         text: "NS Lookup"
-       },
-       {
-         html: checkResult.nslookup
-       }
-     ],
-          [
-       {
-         text: "NS Lookup Error"
-       },
-       {
-         html: checkResult.nslookupError
-       }
-     ],
-     [
-       {
-         text: "Curl Result StdError"
-       },
-       {
-         html: checkResult.curlResultError
-       }
-     ],
-     [
-       {
-         text: "Curl Result"
-       },
-       {
-         html: checkResult.curlResult.substring(0,300) + "...[snip]"
-       }
-     ],
-     [
-       {
-         text: "DB Result StdError"
-       },
-       {
-         html: checkResult.dbResultError
-       }
-     ],
-     [
-       {
-         text: "DB Result"
-       },
-       {
-         html: checkResult.dbResult.substring(0,300) + "...[snip]"
-       }
-     ],
-     [
-       {
-         text: "DB Alt Result StdError"
-       },
-       {
-         html: checkResult.dbAltResultError
-       }
-     ],
-     [
-       {
-         text: "DB Alt Result"
-       },
-       {
-         html: checkResult.dbAltResult.substring(0,300) + "...[snip]"
-       }
-     ],
      [
        {
          text: "Connection Test Result Error"
@@ -152,7 +48,15 @@
        {
          html: checkResult.connectionResult
        }
-     ]
+     ],
+     [
+          {
+       text: "Status Code"
+     },
+     {
+       text: checkResult.status+" : "+checkResult.statusText+" : "+checkResult.errorMessage
+     }
+   ]
   ]
 }) }}
 
