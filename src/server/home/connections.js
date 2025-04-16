@@ -8,6 +8,7 @@ import dig from 'node-dig-dns'
 import { proxyFetch } from '~/src/server/common/helpers/proxy/proxy-fetch.js'
 import { config } from '~/src/config/config.js'
 import oracledb from 'oracledb'
+import http from 'http'
 
 const exec = util.promisify(childprocess.exec)
 
@@ -37,6 +38,7 @@ const makeConnectionController = {
     const nslookupEnabled = enabled.includes('nslookup')
     const dbEnabled = enabled.includes('dbFull')
     const dbAltEnabled = enabled.includes('dbAlt')
+    const testConnectionEnabled = enabled.includes('testConnection')
 
     const curlProxyCommand = process.env.CDP_HTTPS_PROXY
       ? ' -x $CDP_HTTPS_PROXY '
@@ -62,8 +64,17 @@ const makeConnectionController = {
     let responseText
     let dbResult = {}
     let dbAltResult = {}
+    let connectionResult = {}
 
     try {
+      if (testConnectionEnabled) {
+        connectionResult = await testConnection()
+        logger.info(`testConnection Connected: ${connectionResult.connected}`)
+        logger.info(
+          `testConnection Error : ${connectionResult.proxyConnectErrCause}`
+        )
+      }
+
       if (curlEnabled) {
         logger.info(`Curl command [${curlCommand}]`)
         curlResult = await execRun(curlCommand)
@@ -111,7 +122,7 @@ const makeConnectionController = {
       }
 
       results = {
-        fullUrl,
+        baseurl,
         status: checkResponse.status,
         statusText: checkResponse.statusText,
         fetchResultData: formatResult(responseText),
@@ -123,12 +134,16 @@ const makeConnectionController = {
         dbResult: formatResult(dbResult.rows),
         dbResultError: formatResult(dbResult.errorMessage),
         dbAltResult: formatResult(dbAltResult.rows),
-        dbAltResultError: formatResult(dbAltResult.errorMessage)
+        dbAltResultError: formatResult(dbAltResult.errorMessage),
+        connectionResult: formatResult(connectionResult.connected),
+        connectionResultError: formatResult(
+          connectionResult.proxyConnectErrCause
+        )
       }
     } catch (error) {
       logger.info(error)
       results = {
-        fullUrl,
+        baseurl,
         status: error.code ?? 'None',
         statusText: error.status ?? 'Error',
         fetchResultData: `[none]`,
@@ -142,7 +157,11 @@ const makeConnectionController = {
         dbResult: formatResult(dbResult.rows),
         dbResultError: formatResult(dbResult.errorMessage),
         dbAltResult: formatResult(dbAltResult.rows),
-        dbAltResultError: formatResult(dbAltResult.errorMessage)
+        dbAltResultError: formatResult(dbAltResult.errorMessage),
+        connectionResult: formatResult(connectionResult.connected),
+        connectionResultError: formatResult(
+          connectionResult.proxyConnectErrCause
+        )
       }
     }
 
@@ -241,7 +260,7 @@ const dbAltRun = async (address) => {
       user: 'test',
       password: 'this is not a password',
       connectString: `${address}`,
-      httpsProxy: 'localhost',
+      httpsProxy: 'http://localhost',
       httpsProxyPort: 3128
     })
 
@@ -296,3 +315,58 @@ const encodeHTML = (originalStr) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
     .replace(/\n/g, '<br>')
+
+const testConnection = async () => {
+  let proxyConnectErrCause = ''
+  let req
+  const httpsProxy = 'localhost'
+  const httpsProxyPort = 31536
+  const destination = '10.62.132.5'
+  const destinationPort = 31536
+  const logger = createLogger()
+  let connected = false
+  let stream
+
+  await new Promise((resolve) => {
+    req = http.request({
+      host: httpsProxy,
+      port: httpsProxyPort,
+      method: 'CONNECT',
+      path: destination + ':' + destinationPort
+    })
+    req.once('connect', (res, socket) => {
+      if (res.statusCode === 200) {
+        connected = true
+        stream = socket
+      } else {
+        proxyConnectErrCause = res.statusCode
+      }
+      resolve()
+    })
+    req.once('error', (err) => {
+      proxyConnectErrCause = err.message
+      resolve()
+    })
+    req.end()
+  })
+  if (req) req.removeAllListeners()
+
+  if (!connected) {
+    if (proxyConnectErrCause) {
+      logger.info(
+        'Error making connection: ProxyConnectionError: ' + proxyConnectErrCause
+      )
+    } else {
+      logger.info('Error making connection: Incomplete Connection: ')
+    }
+  }
+
+  if (stream) {
+    stream.close()
+  }
+
+  return {
+    connected,
+    proxyConnectErrCause
+  }
+}
