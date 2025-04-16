@@ -135,7 +135,7 @@ const makeConnectionController = {
         dbResultError: formatResult(dbResult.errorMessage),
         dbAltResult: formatResult(dbAltResult.rows),
         dbAltResultError: formatResult(dbAltResult.errorMessage),
-        connectionResult: formatResult(connectionResult.connected),
+        connectionResult: connectionResult.connected,
         connectionResultError: formatResult(
           connectionResult.proxyConnectErrCause
         )
@@ -158,7 +158,7 @@ const makeConnectionController = {
         dbResultError: formatResult(dbResult.errorMessage),
         dbAltResult: formatResult(dbAltResult.rows),
         dbAltResultError: formatResult(dbAltResult.errorMessage),
-        connectionResult: formatResult(connectionResult.connected),
+        connectionResult: connectionResult.connected,
         connectionResultError: formatResult(
           connectionResult.proxyConnectErrCause
         )
@@ -308,13 +308,15 @@ const formatDig = (digResult) => {
 }
 
 const encodeHTML = (originalStr) =>
-  originalStr
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/\n/g, '<br>')
+  originalStr.replace
+    ? originalStr
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\n/g, '<br>')
+    : originalStr
 
 const testConnection = async () => {
   let proxyConnectErrCause = ''
