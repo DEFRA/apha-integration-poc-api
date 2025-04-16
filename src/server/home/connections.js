@@ -14,17 +14,18 @@ const makeConnectionController = {
     }
     logger.info(`Get received request: ${JSON.stringify(requested)}`)
     const baseurl = requested.query.where
+    const baseport = requested.query.port
 
     const testConnectionEnabled = true
 
-    logger.info(`Starting checks ${baseurl}`)
+    logger.info(`Starting checks ${baseurl} : ${baseport}`)
 
     let results = {}
     let connectionResult = {}
 
     try {
       if (testConnectionEnabled) {
-        connectionResult = await testConnection(baseurl)
+        connectionResult = await testConnection(baseurl, baseport)
         logger.info(`testConnection Connected: ${connectionResult.connected}`)
         logger.info(
           `testConnection Error : ${connectionResult.proxyConnectErrCause}`
@@ -33,6 +34,7 @@ const makeConnectionController = {
 
       results = {
         baseurl,
+        baseport,
         connectionResult: connectionResult.connected,
         connectionResultError: connectionResult.proxyConnectErrCause,
         status: '',
@@ -43,6 +45,7 @@ const makeConnectionController = {
       logger.info(error)
       results = {
         baseurl,
+        baseport,
         status: error.code ?? 'None',
         statusText: error.status ?? 'Error',
         errorMessage: error.message ?? '',
@@ -71,18 +74,18 @@ const makeConnectionController = {
 
 export { makeConnectionController }
 
-const testConnection = async (address) => {
+const testConnection = async (address, baseport) => {
   const proxyConfig = config.get('httpProxy')
-  const proxyUrl = proxyConfig ? new URL(proxyConfig) : 'localhost:8080'
-
-  const addressUrl = new URL(address)
+  const proxyUrl = proxyConfig
+    ? new URL(proxyConfig)
+    : new URL('http://localhost:1234')
 
   let proxyConnectErrCause = ''
   let req
   const httpsProxy = proxyUrl.hostname
   const httpsProxyPort = proxyUrl.port
-  const destination = addressUrl.hostname
-  const destinationPort = addressUrl.port
+  const destination = address
+  const destinationPort = baseport
   const logger = createLogger()
   const loginfo =
     'Attempting proxy based connection [' +
