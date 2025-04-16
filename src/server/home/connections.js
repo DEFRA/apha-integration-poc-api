@@ -138,7 +138,8 @@ const testConnection = async (address, baseport) => {
   }
 
   if (stream) {
-    stream.close()
+    if (this.stream.destroy) this.stream.destroy()
+    if (this.stream.end) this.stream.end()
   }
 
   return {
