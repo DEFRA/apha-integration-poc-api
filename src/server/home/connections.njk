@@ -30,7 +30,7 @@
         text: "Connection URL"
       },
       {
-        text: checkResult.fullUrl
+        text: checkResult.baseurl
       }
     ],
    [
@@ -121,7 +121,7 @@
          html: checkResult.dbResult.substring(0,300) + "...[snip]"
        }
      ],
-          [
+     [
        {
          text: "DB Alt Result StdError"
        },
@@ -135,6 +135,22 @@
        },
        {
          html: checkResult.dbAltResult.substring(0,300) + "...[snip]"
+       }
+     ],
+     [
+       {
+         text: "Connection Test Result Error"
+       },
+       {
+         html: checkResult.connectionResultError
+       }
+     ],
+     [
+       {
+         text: "Connection Test Result"
+       },
+       {
+         html: checkResult.connectionResult
        }
      ]
   ]
