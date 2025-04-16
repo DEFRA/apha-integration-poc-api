@@ -36,6 +36,7 @@ const makeConnectionController = {
     const curlEnabled = enabled.includes('curl')
     const nslookupEnabled = enabled.includes('nslookup')
     const dbEnabled = enabled.includes('db')
+    const dbAltEnabled = enabled.includes('dbAlt')
 
     const curlProxyCommand = process.env.CDP_HTTPS_PROXY
       ? ' -x $CDP_HTTPS_PROXY '
@@ -60,6 +61,7 @@ const makeConnectionController = {
     }
     let responseText
     let dbResult = {}
+    let dbAltResult = {}
 
     try {
       if (curlEnabled) {
@@ -103,6 +105,11 @@ const makeConnectionController = {
         dbResult = await dbRun(baseurl)
       }
 
+      if (dbAltEnabled) {
+        logger.info('Running dbconnection test')
+        dbAltResult = await dbAltRun(baseurl)
+      }
+
       results = {
         fullUrl,
         status: checkResponse.status,
@@ -114,7 +121,9 @@ const makeConnectionController = {
         nslookup: formatResult(nslookupResult.stdout),
         nslookupError: formatResult(nslookupResult.stderr),
         dbResult: formatResult(dbResult.rows),
-        dbResultError: formatResult(dbResult.errorMessage)
+        dbResultError: formatResult(dbResult.errorMessage),
+        dbAltResult: formatResult(dbAltResult.rows),
+        dbAltResultError: formatResult(dbAltResult.errorMessage)
       }
     } catch (error) {
       logger.info(error)
@@ -131,7 +140,9 @@ const makeConnectionController = {
         nslookup: formatResult(nslookupResult.stderr),
         nslookupError: formatResult(nslookupResult.stderr),
         dbResult: formatResult(dbResult.rows),
-        dbResultError: formatResult(dbResult.errorMessage)
+        dbResultError: formatResult(dbResult.errorMessage),
+        dbAltResult: formatResult(dbAltResult.rows),
+        dbAltResultError: formatResult(dbAltResult.errorMessage)
       }
     }
 
@@ -178,11 +189,11 @@ const digRun = (baseUrl) => {
 }
 
 const dbRun = async (address) => {
-  const proxyConfig = config.get('httpProxy')
-  const proxyUrl = new URL(proxyConfig)
-  const proxyFinalConfig = proxyConfig
-    ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
-    : ''
+  // const proxyConfig = config.get('httpProxy')
+  // const proxyUrl = new URL(proxyConfig)
+  // const proxyFinalConfig = proxyConfig
+  //   ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
+  //   : ''
   let runResults = {}
 
   let connection
@@ -190,7 +201,48 @@ const dbRun = async (address) => {
     connection = await oracledb.getConnection({
       user: 'test',
       password: 'this is not a password',
-      connectString: `tcps://${address}/SOMEDB${proxyFinalConfig}`
+      connectString: `${address}`
+    })
+
+    const result = await connection.execute(`SELECT * FROM dual`)
+    runResults = {
+      rows: result?.rows ?? 'No rows returned',
+      errorMessage: connection.errorMessage ?? 'No Error message'
+    }
+  } catch (ex) {
+    runResults = {
+      rows: 'Error occured',
+      errorMessage:
+        ex.message +
+        '\n\nStackTrace:\n' +
+        ex.stack +
+        '\n\nError Code:\n' +
+        ex.code
+    }
+  } finally {
+    if (connection) {
+      await connection.close()
+    }
+  }
+  return runResults
+}
+
+const dbAltRun = async (address) => {
+  // const proxyConfig = config.get('httpProxy')
+  // const proxyUrl = new URL(proxyConfig)
+  // const proxyFinalConfig = proxyConfig
+  //   ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
+  //   : ''
+  let runResults = {}
+
+  let connection
+  try {
+    connection = await oracledb.getConnection({
+      user: 'test',
+      password: 'this is not a password',
+      connectString: `${address}`,
+      httpsProxy: 'localhost',
+      httpsProxyPort: 3128
     })
 
     const result = await connection.execute(`SELECT * FROM dual`)
