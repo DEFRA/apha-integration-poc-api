@@ -178,11 +178,11 @@ const digRun = (baseUrl) => {
 }
 
 const dbRun = async (address) => {
-  const proxyConfig = config.get('httpProxy')
-  const proxyUrl = new URL(proxyConfig)
-  const proxyFinalConfig = proxyConfig
-    ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
-    : ''
+  // const proxyConfig = config.get('httpProxy')
+  // const proxyUrl = new URL(proxyConfig)
+  // const proxyFinalConfig = proxyConfig
+  //   ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
+  //   : ''
   let runResults = {}
 
   let connection
@@ -190,7 +190,7 @@ const dbRun = async (address) => {
     connection = await oracledb.getConnection({
       user: 'test',
       password: 'this is not a password',
-      connectString: `tcps://${address}/SOMEDB${proxyFinalConfig}`
+      connectString: `${address}`
     })
 
     const result = await connection.execute(`SELECT * FROM dual`)
