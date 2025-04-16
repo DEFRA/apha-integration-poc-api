@@ -248,7 +248,9 @@ const dbRun = async (address) => {
 
 const dbAltRun = async (address) => {
   const proxyConfig = config.get('httpProxy')
-  const proxyUrl = new URL(proxyConfig)
+  const proxyUrl = proxyConfig
+    ? new URL(proxyConfig)
+    : new URL('http://localhost:1234')
   // const proxyFinalConfig = proxyConfig
   //   ? `?https_proxy=${proxyUrl.hostname}&https_proxy_port=${proxyUrl.port}`
   //   : ''
@@ -261,7 +263,7 @@ const dbAltRun = async (address) => {
       password: 'this is not a password',
       connectString: `${address}`,
       httpsProxy: proxyUrl.hostname,
-      httpsProxyPort: proxyUrl.port
+      httpsProxyPort: +proxyUrl.port
     })
 
     const result = await connection.execute(`SELECT * FROM dual`)
@@ -320,16 +322,18 @@ const encodeHTML = (originalStr) =>
 
 const testConnection = async (address) => {
   const proxyConfig = config.get('httpProxy')
-  const proxyUrl = new URL(proxyConfig)
+  const proxyUrl = proxyConfig
+    ? new URL(proxyConfig)
+    : new URL('http://localhost:1234')
 
-  const addressUrl = new URL(address)
+  const addressUrl = address.split(':')
 
   let proxyConnectErrCause = ''
   let req
   const httpsProxy = proxyUrl.hostname
   const httpsProxyPort = proxyUrl.port
-  const destination = addressUrl.hostname
-  const destinationPort = addressUrl.port
+  const destination = addressUrl[0]
+  const destinationPort = addressUrl[1]
   const logger = createLogger()
   const loginfo =
     'Attempting proxy based connection [' +
@@ -350,7 +354,7 @@ const testConnection = async (address) => {
   await new Promise((resolve) => {
     req = http.request({
       host: httpsProxy,
-      port: httpsProxyPort,
+      port: +httpsProxyPort,
       method: 'CONNECT',
       path: destination + ':' + destinationPort
     })

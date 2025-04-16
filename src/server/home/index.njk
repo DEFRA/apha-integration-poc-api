@@ -17,12 +17,21 @@
 
 {{ govukInput({
   label: {
-    text: "Destination server:port (default 80)",
+    text: "Destination server",
     classes: "govuk-label--l",
     isPageHeading: false
   },
   id: "where",
   name: "where"
+}) }}
+{{ govukInput({
+  label: {
+    text: "Destination port",
+    classes: "govuk-label--l",
+    isPageHeading: false
+  },
+  id: "port",
+  name: "port"
 }) }}
 
       <div class="govuk-button-group">
