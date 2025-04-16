@@ -35,7 +35,7 @@ const makeConnectionController = {
     const digEnabled = enabled.includes('dig')
     const curlEnabled = enabled.includes('curl')
     const nslookupEnabled = enabled.includes('nslookup')
-    const dbEnabled = enabled.includes('db')
+    const dbEnabled = enabled.includes('dbFull')
     const dbAltEnabled = enabled.includes('dbAlt')
 
     const curlProxyCommand = process.env.CDP_HTTPS_PROXY
