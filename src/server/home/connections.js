@@ -101,7 +101,6 @@ const testConnection = async (address, baseport) => {
   logger.info(loginfo)
 
   let connected = false
-  let stream
 
   await new Promise((resolve) => {
     req = http.request({
@@ -110,10 +109,9 @@ const testConnection = async (address, baseport) => {
       method: 'CONNECT',
       path: destination + ':' + destinationPort
     })
-    req.once('connect', (res, socket) => {
+    req.once('connect', (res) => {
       if (res.statusCode === 200) {
         connected = true
-        stream = socket
       } else {
         proxyConnectErrCause = res.statusCode
       }
@@ -135,11 +133,6 @@ const testConnection = async (address, baseport) => {
     } else {
       logger.info('Error making connection: Incomplete Connection: ')
     }
-  }
-
-  if (stream) {
-    if (this.stream.destroy) this.stream.destroy()
-    if (this.stream.end) this.stream.end()
   }
 
   return {
